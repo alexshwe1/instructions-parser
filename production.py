@@ -114,54 +114,70 @@ def find_cheapest_price(target_product):
     This function recursively finds the cheapest price between a given product
     and it's children. The base case is when a product has no input products.
     
+    
     Args:
         target_product
         
     Returns:
         integer: the cheapest price between the product and it's input products
     """
-    
-    if ip_size(target_product) == 0:
+    if ip_size(target_product) == 0: # product can't be made
+        ips_list.append(target_product)
         return round(price(target_product), 2)
     else:
         ips = find_ip(target_product)
         ip_price = 0
         for ip in ips:
             if price(ip) == "null" and ip_size(ip) == 0: # if the product can't be made or bought
-                #ips_dict[target_product] += 1
+                # remove all ips from ip list and add target product
+                for ip in ips:
+                    if ip in ips_list:
+                        ips_list.remove(ip)
+                ips_list.append(target_product)
                 return price(target_product)
             ip_price += find_cheapest_price(ip)
         if price(target_product) != "null":
-            #if price(target_product) <= ip_price: # product is cheaper to buy
-                #ips_dict[target_product] += 1
-            #else: # product is cheaper to make
-                # for ip in ips:
-                    #ips_dict[ip] += 1
-            return min(price(target_product), ip_price)
-        #ips_dict[ip] += 1 # if product can't be bought but can be made
-        return round(ip_price, 2)
-   
-"""
-def remove_more_expensive_ips(ips_dict):
-    ips_dict_copy = copy.deepcopy(ips_dict)
-    for product in ips_dict_copy:
-        for ip in find_ip(product):
-            ips_dict[ip] -= 1
-    print(ips_dict)
-    ret_list = []
-    for product in ips_dict:
-        ret_list.append(product)
-    return ret_list
-"""
+            if price(target_product) <= ip_price:
+                ips_list.append(target_product)
+                for ip in ips:
+                    ips_list.remove(ip)
+                return price(target_product)
+            else:
+                for ip in ips:
+                    cheaper_ips.add(ip)
+                    if ip not in cheaper_ips:
+                        ips_list.append(ip)
+                return ip_price
+        # if product can't be bought
+        return ip_price
+
+def print_output(lst, prc):
+    """Writes to stdout with a list of all
+    products required as inputs to build the target
+    product as well as the cheapest possible price to
+    manufacture the target product.
+    
+    Args:
+        lst: a list of all input products
+        prc: an integer indicating the cheapest price
+        
+    Returns:
+        void: only writes to stdout
+    """
+    temp_set = set(lst)
+    lst_no_duplicates = [prod for prod in temp_set]
+    for prod in lst_no_duplicates:
+        output_line = str(price(prod)) +" (" + prod + ")\n"
+        sys.stdout.write(output_line)
+    sys.stdout.write("--------\n")
+    sys.stdout.write(str(cheapest_price))
     
 with open(sys.argv[1], 'r') as f:
     file_contents = f.read()
     
 fc_split = [s.strip() for s in file_contents.split(",")]
 tp = find_target_product()
-# ips_dict = defaultdict(int)
+ips_list = []
+cheaper_ips = set()
 cheapest_price = find_cheapest_price(tp)
-# ips_list = remove_more_expensive_ips(ips_dict)
-#sys.stdout.write(str(ips_list))
-#sys.stdout.write("\n")
-sys.stdout.write(str(cheapest_price))
+print_output(ips_list, cheapest_price)
